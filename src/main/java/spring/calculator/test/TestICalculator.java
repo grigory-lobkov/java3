@@ -1,8 +1,9 @@
-package spring.calculator;
+package spring.calculator.test;
 
 
 import org.junit.Assert;
 import org.junit.Test;
+import spring.calculator.App;
 
 public class TestICalculator {
 
