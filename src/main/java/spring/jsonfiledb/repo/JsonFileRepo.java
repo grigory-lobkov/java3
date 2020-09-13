@@ -1,4 +1,4 @@
-package spring.jsonfiledb.db;
+package spring.jsonfiledb.repo;
 
 import com.dslplatform.json.DslJson;
 import com.dslplatform.json.JsonReader;
@@ -15,8 +15,14 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/*
+Сравнение JSON библиотек
+https://github.com/fabienrenaud/java-json-benchmark
+Пример работы с DSL-JSON
+https://github.com/ngs-doo/dsl-json/blob/master/examples/MavenJava8/src/main/java/com/dslplatform/maven/Example.java
+*/
 //FileTaskRepository
-public class JsonFile implements IDb {
+public class JsonFileRepo implements IRepo {
 
     private String fileName;
 

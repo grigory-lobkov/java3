@@ -3,7 +3,8 @@ package spring.jsonfiledb;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import spring.jsonfiledb.db.IDb;
+import spring.jsonfiledb.bus.IBus;
+import spring.jsonfiledb.repo.IRepo;
 import spring.jsonfiledb.pojo.IPojo;
 import spring.jsonfiledb.pojo.Task;
 
@@ -45,18 +46,20 @@ public class App {
     static ApplicationContext context;
 
     static public IPojo pojo;
-    static public IDb input;
+    static public IRepo repo;
+    static public IBus bus;
 
 
     static {
         context = new ClassPathXmlApplicationContext("jsonfiledb-context.xml");
         pojo = context.getBean(IPojo.class);
-        input = context.getBean(IDb.class);
+        repo = context.getBean(IRepo.class);
+        bus = context.getBean(IBus.class);
     }
 
 
-    public static void main(String[] args) throws Exception {
-        input.init("example.json", pojo.getClass());
+    public static void main1(String[] args) throws Exception {
+        repo.init("example.json", pojo.getClass());
 
         Task task1 = new Task();
         task1.setId("1");
@@ -72,20 +75,29 @@ public class App {
         task2.setName("Task 2");
         task2.setStoryPoint(2);
 
-        input.save(task1);
-        input.save(task2);
+        repo.save(task1);
+        repo.save(task2);
 
-        System.out.println("1: "+input.get("1"));
-        System.out.println("2: "+input.get("2"));
+        System.out.println("1: "+ repo.get("1"));
+        System.out.println("2: "+ repo.get("2"));
 
         task1.setName("Task 111111111111");
         task2.setDescription("2222222222222222222222222");
 
-        input.save(task1);
-        input.save(task2);
+        repo.save(task1);
+        repo.save(task2);
 
-        System.out.println("1: "+input.get("1"));
-        System.out.println("2: "+input.get("2"));
+        System.out.println("1: "+ repo.get("1"));
+        System.out.println("2: "+ repo.get("2"));
+    }
+
+    public static void main(String[] args) throws Exception {
+        // инициализация хранилища
+        repo.init("example.json", pojo.getClass());
+
+        // запуск программы
+        bus.start(pojo, repo);
+
     }
 
 }

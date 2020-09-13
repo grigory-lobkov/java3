@@ -5,15 +5,15 @@ import com.dslplatform.json.*;
 @CompiledJson
 public class Task implements IPojo {
 
-    @JsonAttribute
+    @JsonAttribute(name = "ID")
     private String id;
-    @JsonAttribute
+    @JsonAttribute(name = "Описание")
     private String description;
-    @JsonAttribute
+    @JsonAttribute(name = "Автор")
     private String author;
-    @JsonAttribute
+    @JsonAttribute(name = "Имя")
     private String name;
-    @JsonAttribute
+    @JsonAttribute(name = "Точка истории")
     private int storyPoint;
 
 

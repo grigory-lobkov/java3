@@ -1,11 +1,11 @@
-package spring.jsonfiledb.db;
+package spring.jsonfiledb.repo;
 
 import spring.jsonfiledb.pojo.IPojo;
 
 import java.util.List;
 
 //TaskRepository
-public interface IDb {
+public interface IRepo {
 
     void init(Object... params) throws Exception;
 

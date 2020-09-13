@@ -2,14 +2,14 @@ package spring.jsonfiledb.test;
 
 import org.junit.*;
 import spring.jsonfiledb.App;
-import spring.jsonfiledb.db.IDb;
+import spring.jsonfiledb.repo.IRepo;
 import spring.jsonfiledb.pojo.IPojo;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.List;
 
-public class TestIDb {
+public class TestIRepo {
 
     static private final String fileName = "test.json";
     static private File file;
@@ -18,7 +18,7 @@ public class TestIDb {
     static private IPojo pojo;
     static private IPojo pojo1;
     static private IPojo pojo2;
-    static private IDb input;
+    static private IRepo input;
 
     static {
         try {
@@ -32,7 +32,7 @@ public class TestIDb {
             pojo1.setId("001");
             pojo2.setId("002");
 
-            input = App.input;
+            input = App.repo;
             file = new File(fileName);
         } catch (Exception e) {
             e.printStackTrace();

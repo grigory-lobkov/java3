@@ -5,9 +5,11 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-    <bean id="db" class="spring.jsonfiledb.db.JsonFile" destroy-method="destroy" />
+    <bean id="db" class="spring.jsonfiledb.repo.JsonFileRepo" destroy-method="destroy" />
 
     <bean id="pojo" class="spring.jsonfiledb.pojo.Task" />
+
+    <bean id="bus" class="spring.jsonfiledb.bus.ConsoleBus" />
 
     <!--<bean id="coin" class="ru.easyjava.spring.CoinImpl">-->
         <!--<constructor-arg type="java.util.Random">-->
