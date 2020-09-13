@@ -5,9 +5,9 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-    <bean id="input" class="spring.calculator.business.ConsoleInput" />
+    <bean id="input" class="spring.calculator.bus.ConsoleBus" />
 
-    <bean id="calculator" class="spring.calculator.repository.AdvancedCalculator" />
+    <bean id="calculator" class="spring.calculator.repo.AdvancedCalculator" />
 
     <!--<bean id="coin" class="ru.easyjava.spring.CoinImpl">-->
         <!--<constructor-arg type="java.util.Random">-->

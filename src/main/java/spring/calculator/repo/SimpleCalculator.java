@@ -1,4 +1,4 @@
-package spring.calculator.repository;
+package spring.calculator.repo;
 
 public class SimpleCalculator implements ICalculator {
 

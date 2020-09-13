@@ -3,8 +3,8 @@ package spring.calculator;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import spring.calculator.business.IInput;
-import spring.calculator.repository.ICalculator;
+import spring.calculator.bus.IBus;
+import spring.calculator.repo.ICalculator;
 
 /* 1.1. Практическая работа
 
@@ -29,7 +29,7 @@ public class App {
 
     //static ICalculator calculator=new SimpleCalculator();
     static public ICalculator calculator;
-    static public IInput input;
+    static public IBus bus;
 
 
     static {
@@ -41,14 +41,14 @@ public class App {
 
         // создание бинов
         calculator = context.getBean(ICalculator.class);
-        input = context.getBean(IInput.class);
+        bus = context.getBean(IBus.class);
     }
 
 
     public static void main(String[] args) {
 
         // запуск программы
-        input.start(calculator);
+        bus.start(calculator);
 
     }
 

@@ -1,11 +1,10 @@
-package spring.calculator.business;
+package spring.calculator.bus;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import spring.calculator.repository.ICalculator;
+import spring.calculator.repo.ICalculator;
 
 import java.util.Scanner;
 
-public class ConsoleInput implements IInput {
+public class ConsoleBus implements IBus {
 
     public void start(ICalculator calculator) {
         System.out.println("type '/' to exit");
