@@ -1,6 +1,5 @@
 package spring.jsonfiledb;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import spring.jsonfiledb.bus.IBus;
@@ -42,22 +41,29 @@ public class TaskImpl {
 
 public class App {
 
-    static BeanFactory oldcontext;
-    static ApplicationContext context;
+    /**
+     * Инициализация контекста приложения
+     */
+    static ApplicationContext context = new ClassPathXmlApplicationContext("jsonfiledb-context.xml");
 
-    static public IPojo pojo;
-    static public IRepo repo;
-    static public IBus bus;
+    /**
+     * Бин POJO-объекта, класс которого определяется контекстом
+     */
+    static public IPojo pojo = context.getBean(IPojo.class);
 
+    /**
+     * Бин репозитория
+     */
+    static public IRepo repo = context.getBean(IRepo.class);
 
-    static {
-        context = new ClassPathXmlApplicationContext("jsonfiledb-context.xml");
-        pojo = context.getBean(IPojo.class);
-        repo = context.getBean(IRepo.class);
-        bus = context.getBean(IBus.class);
-    }
+    /**
+     * Бин шины взаимодействия с внешним миром
+     */
+    static public IBus bus = context.getBean(IBus.class);
 
-
+    /**
+     * тест 1
+     */
     public static void main1(String[] args) throws Exception {
         repo.init("example.json", pojo.getClass());
 
@@ -91,6 +97,14 @@ public class App {
         System.out.println("2: "+ repo.get("2"));
     }
 
+    /**
+     * Точка входа в приложение
+     *
+     * Управление таблицей POJO-объектов в файле через консоль
+     *
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         // инициализация хранилища
         repo.init("example.json", pojo.getClass());

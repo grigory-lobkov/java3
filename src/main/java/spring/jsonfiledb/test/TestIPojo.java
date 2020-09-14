@@ -6,16 +6,23 @@ import spring.jsonfiledb.App;
 import spring.jsonfiledb.pojo.IPojo;
 import spring.jsonfiledb.pojo.Task;
 
-import java.io.File;
 import java.lang.reflect.Constructor;
 
+/**
+ * Тестирование POJO-объекта, заданного контекстом spring.jsonfiledb.App
+ */
 public class TestIPojo {
 
-    static private final String fileName = "test.json";
+    static private IPojo pojo;
     static private Class pojoClazz;
     static private Constructor<IPojo> pojoConstructor;
-    static private IPojo pojo;
 
+    /**
+     * Один раз перед всеми тестами
+     * Создаем новый POJO-объект для тестов
+     *
+     * @throws Exception
+     */
     @BeforeClass
     public static void init() throws Exception {
         pojoClazz = App.pojo.getClass();
@@ -23,12 +30,9 @@ public class TestIPojo {
         pojo = pojoConstructor.newInstance();
     }
 
-    @AfterClass
-    public static void destroy() throws Exception {
-        File f = new File(fileName);
-        f.delete();
-    }
-
+    /**
+     * Пробуем установить идентификатор и прочитать его - должен совпадать
+     */
     @Test
     public void IPojo_id_setget() {
         String newId = "unique_identifier";
@@ -39,6 +43,9 @@ public class TestIPojo {
         Assert.assertEquals(newId, factId);
     }
 
+    /**
+     * Проверяем, что POJO-примитив является реализацией класса Task
+     */
     @Test
     public void IPojo_is_Task() {
        Assert.assertTrue(pojo instanceof Task);

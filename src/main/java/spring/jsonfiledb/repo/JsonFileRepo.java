@@ -15,59 +15,111 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/*
-Сравнение JSON библиотек
-https://github.com/fabienrenaud/java-json-benchmark
-Пример работы с DSL-JSON
-https://github.com/ngs-doo/dsl-json/blob/master/examples/MavenJava8/src/main/java/com/dslplatform/maven/Example.java
-*/
+/**
+ * Хранение POJO объектов в формате JSON в файле построчно
+ *
+ * Сравнение JSON библиотек
+ * https://github.com/fabienrenaud/java-json-benchmark
+ * Пример работы с DSL-JSON
+ * https://github.com/ngs-doo/dsl-json/blob/master/examples/MavenJava8/src/main/java/com/dslplatform/maven/Example.java
+ */
 //FileTaskRepository
 public class JsonFileRepo implements IRepo {
 
+    /**
+     * Имя файла-хранилища данных
+     */
     private String fileName;
 
+    /**
+     * Указатель на актуальный файл
+     */
     private File file;
 
+    /**
+     * Блокировщик всех записей в файл
+     */
     private Lock lockWrite = new ReentrantLock();
-    private ReadWriteLock lockRead = new ReentrantReadWriteLock();
-    private Class clazz;
-    private Constructor<IPojo> clazzConstructor;
 
+    /**
+     * Блокировщик чтения, используется на последнем этапе записи в файл
+     */
+    private ReadWriteLock lockRead = new ReentrantReadWriteLock();
+
+    /**
+     * Класс POJO объекта
+     */
+    private Class pojoClazz;
+    /**
+     * Конструктор POJO объекта
+     */
+    private Constructor<IPojo> pojoClazzConstructor;
+
+    /**
+     * JSON сериализатор
+     */
     private DslJson<Object> json;
 
+    /**
+     * Инициализация хранилища
+     *
+     * @param params два параметра: имя файла хранилища и класс хранимого объекта
+     * @throws NoSuchMethodException в случае отсутствия конструктор POJO объекта (используется конструктор без параметров)
+     * @throws IllegalAccessException в случае проблемы создания экземпляра объекта
+     * @throws InvocationTargetException в случае проблемы создания экземпляра объекта
+     * @throws InstantiationException в случае проблемы создания экземпляра объекта
+     * @throws IOException в случае неудачи создания файла
+     */
     @Override
-    public void init(Object... params) throws Exception {
-        if(params.length!=2)
-            throw new RuntimeException("You have to use init(String fileName, Class clazz);");
+    public void init(Object... params) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, IOException {
+        if (params.length != 2)
+            throw new RuntimeException("You have to use init(String fileName, Class pojoClazz);");
 
-        if(!(params[0] instanceof String))
+        if (!(params[0] instanceof String))
             throw new RuntimeException("params[0] is not String");
         fileName = (String) params[0];
 
-        clazz = (Class)params[1];
-        clazzConstructor = clazz.getConstructor();
-        IPojo instance = clazzConstructor.newInstance();
-        if(!(instance instanceof IPojo))
-            throw new RuntimeException("params[1] is not IPojo: "+clazz.getName());
+        pojoClazz = (Class) params[1];
+        pojoClazzConstructor = pojoClazz.getConstructor();
+        IPojo instance = pojoClazzConstructor.newInstance();
+        if (!(instance instanceof IPojo))
+            throw new RuntimeException("params[1] is not IPojo: " + pojoClazz.getName());
 
         file = new File(fileName);
-        if(!file.exists())
+        if (!file.exists())
             file.createNewFile();
         json = new DslJson<>();
     }
 
+    /**
+     * Завершение работы с хранилищем
+     * Фактически - ожидание завершения записей и чтения - занимаем locks
+     */
     @Override
     public void destroy() {
         lockWrite.lock();
         lockRead.writeLock().lock();
     }
 
+    /**
+     * Сериализация POJO объекта - преобразование в строку
+     *
+     * @param pojo объект
+     * @return строка JSON
+     * @throws IOException проблема с сериализацией
+     */
     private String pojoToString(IPojo pojo) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         json.serialize(pojo, os);
         return os.toString("UTF-8");
     }
 
+    /**
+     * Сохранение нового POJO объекта
+     * без проверки на существование идентификатора - быстрое добавление в конец хранилища
+     *
+     * @param pojo добавляемый объект
+     */
     public void save(IPojo pojo) {
         try {
             String newLine = pojoToString(pojo);
@@ -92,19 +144,38 @@ public class JsonFileRepo implements IRepo {
         }
     }
 
+    /**
+     * Обновление объекта в хранилище
+     *
+     * Идентификатор объекта уже должен быть в хранилище
+     *
+     * @param pojo обновленный объект
+     * @throws NoSuchElementException если не смог найти объект в хранилище
+     */
     public void update(IPojo pojo) {
         update(pojo, false, true);
     }
 
-    public void update(IPojo pojo, boolean addIfNotFound, boolean throwIfNotFound) {
+    /**
+     * Обновление объекта в хранилище (для внутреннего использования)
+     * Параметрами можно определить различное поведение
+     *
+     * @param pojo объект для обновления
+     * @param addIfNotFound {@code true} добавляем в случае отсутствия идентификатора,
+     *                      {@code false} оставляем хранилище без изменений, если не нашли объект изменения в хранилище
+     * @param throwIfNotFound {@code true} если нужно сгенерировать ошибку при осутствии объекта в храниилище
+     *                                    - метод не добавит объект даже если {@code addIfNotFound = true}
+     * @throws NoSuchElementException если не смог найти объект в хранилище (когда {@code throwIfNotFound = true})
+     */
+    private void update(IPojo pojo, boolean addIfNotFound, boolean throwIfNotFound) {
         lockWrite.lock();
         try {
-            IPojo instance = clazzConstructor.newInstance();
+            IPojo instance = pojoClazzConstructor.newInstance();
             String id = pojo.getId();
             String newLine = pojoToString(pojo);
             boolean found = false;
             // предпологается создать клон основного файла, а только потом лочить чтение, чтобы переименовать файлы
-            File file2 = new File(fileName+"_tmp");
+            File file2 = new File(fileName + "_tmp");
             try (FileWriter fileWriter = new FileWriter(file2);
                  BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
                  PrintWriter printWriter = new PrintWriter(bufferedWriter);
@@ -113,7 +184,7 @@ public class JsonFileRepo implements IRepo {
                 //читаем основной файл и тут же заполняем временный
                 String line = bufferedReader.readLine();
                 while (line != null) {
-                    if(!found) {
+                    if (!found) {
                         lineToInstance(line, instance);
                         if (id.equals(instance.getId())) {
                             line = newLine;
@@ -124,39 +195,26 @@ public class JsonFileRepo implements IRepo {
                     line = bufferedReader.readLine();
                 }
                 //если такой строчки не было, добавляем в конец
-                if(!found && addIfNotFound) {
+                if (!found && addIfNotFound) {
                     printWriter.println(newLine);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if(!found) {
-                if(throwIfNotFound) {
+            if (!found) {
+                if (throwIfNotFound) {
                     file2.delete();
-                    throw new NoSuchElementException("Cannot find id='"+id+"'");
+                    throw new NoSuchElementException("Cannot find id='" + id + "'");
                 }
-                if(!addIfNotFound) {
+                if (!addIfNotFound) {
                     file2.delete();
                     return;
                 }
             }
-                /*//пишем монопольно один объект
-                try (FileWriter fileWriter = new FileWriter(file);
-                     BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    json.serialize(pojo, os);
-                    bufferedWriter.write(os.toString("UTF-8"));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }*/
 
-            lockRead.writeLock().lock();
             // лочим чтение и подменяем на обновленный файл
-            try {
-                replaceFile(file, file2);
-            } finally {
-                lockRead.writeLock().unlock();
-            }
+            replaceFile(file, file2);
+
         } catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         } finally {
@@ -164,24 +222,47 @@ public class JsonFileRepo implements IRepo {
         }
     }
 
+    /**
+     * Десериализация объекта из строки JSON в POJO-класс
+     *
+     * @param line строка, содержащая объект POJO в виде JSON
+     * @param instance объект для сохранения свойств
+     * @throws UnsupportedEncodingException в случае плохого формата строки {@code line}
+     * @throws IOException в случае ошибок при установке свойств объекта {@code instance}
+     */
     private void lineToInstance(String line, IPojo instance) throws IOException {
         byte[] bytes = line.getBytes("UTF-8");
         JsonReader<Object> reader = json.newReader().process(bytes, bytes.length);
-        reader.next(clazz, clazz.cast(instance));
+        reader.next(pojoClazz, pojoClazz.cast(instance));
     }
 
+    /**
+     * Удаление объекта из хранилища
+     *
+     * @param id идентификатор удаляемого объекта
+     * @throws NoSuchElementException если не смог найти объект в хранилище
+     */
     public void delete(String id) {
         delete(id, true);
     }
 
+
+    /**
+     * Удаление объекта из хранилища (для внутреннего использования)
+     * Параметрами можно определить различное поведение
+     *
+     * @param id идентификатор удаляемого объекта
+     * @param throwIfNotFound {@code true} если нужно сгенерировать ошибку при осутствии объекта в храниилище
+     * @throws NoSuchElementException если не смог найти объект в хранилище (когда {@code throwIfNotFound = true})
+     */
     public void delete(String id, boolean throwIfNotFound) {
         lockWrite.lock();
         try {
-            IPojo instance = clazzConstructor.newInstance();
+            IPojo instance = pojoClazzConstructor.newInstance();
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             boolean found = false;
             // предпологается создать клон основного файла, а только потом лочить чтение, чтобы переименовать файлы
-            File file2 = new File(fileName+"_tmp");
+            File file2 = new File(fileName + "_tmp");
             try (FileWriter fileWriter = new FileWriter(file2);
                  BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
                  PrintWriter printWriter = new PrintWriter(bufferedWriter);
@@ -204,18 +285,13 @@ public class JsonFileRepo implements IRepo {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if(found) {
-                lockRead.writeLock().lock();
+            if (found) {
                 // лочим чтение и подменяем на обновленный файл
-                try {
-                    replaceFile(file, file2);
-                } finally {
-                    lockRead.writeLock().unlock();
-                }
+                replaceFile(file, file2);
             } else {
                 file2.delete();
-                if(throwIfNotFound)
-                    throw new NoSuchElementException("Cannot find id='"+id+"'");
+                if (throwIfNotFound)
+                    throw new NoSuchElementException("Cannot find id='" + id + "'");
             }
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
@@ -224,18 +300,36 @@ public class JsonFileRepo implements IRepo {
         }
     }
 
-    private void replaceFile(File original, File newOne){
-        if(original.delete()){
-            if(!newOne.renameTo(original)) {
+    /**
+     * Остановить чтение и подменить один файл другим
+     *
+     * @param original какой файл заменяем
+     * @param newOne новый файл хранилища
+     */
+    private void replaceFile(File original, File newOne) {
+        lockRead.writeLock().lock();
+        try {
+            // лочим чтение и подменяем на обновленный файл
+            if (original.delete()) {
+                if (!newOne.renameTo(original)) {
+                    newOne.delete();
+                    throw new RuntimeException("File is broken. Cannot rename temp file to original one.");
+                }
+            } else {
                 newOne.delete();
-                throw new RuntimeException("File is broken. Cannot rename temp file to original one.");
+                throw new RuntimeException("Cannot replace original file.");
             }
-        } else {
-            newOne.delete();
-            throw new RuntimeException("Cannot replace original file.");
+        } finally {
+            lockRead.writeLock().unlock();
         }
     }
 
+    /**
+     * Получить список всех записей из хранилища
+     *
+     * @param <T> тип объектов списка (тип POJO объекта)
+     * @return список всех POJO-объектов из хранилища
+     */
     public <T> List<T> get() {
         List<Object> result = new ArrayList<>();
         lockRead.readLock().lock();
@@ -244,7 +338,7 @@ public class JsonFileRepo implements IRepo {
                  BufferedReader bufferedReader = new BufferedReader(fileReader)) {
                 String line = bufferedReader.readLine();
                 while (line != null) {
-                    IPojo instance = clazzConstructor.newInstance();
+                    IPojo instance = pojoClazzConstructor.newInstance();
                     lineToInstance(line, instance);
                     result.add(instance);
                     line = bufferedReader.readLine();
@@ -260,10 +354,16 @@ public class JsonFileRepo implements IRepo {
         return (List<T>) result;
     }
 
+    /**
+     * Получить объект из хранилища
+     *
+     * @param id идентификатор POJO-объекта
+     * @return POJO-объект
+     */
     public IPojo get(String id) {
         lockRead.readLock().lock();
         try {
-            IPojo instance = clazzConstructor.newInstance();
+            IPojo instance = pojoClazzConstructor.newInstance();
             try (FileReader fileReader = new FileReader(file);
                  BufferedReader bufferedReader = new BufferedReader(fileReader)) {
                 String line = bufferedReader.readLine();
@@ -282,4 +382,5 @@ public class JsonFileRepo implements IRepo {
         }
         return null;
     }
+
 }

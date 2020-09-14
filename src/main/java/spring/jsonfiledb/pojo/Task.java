@@ -2,17 +2,24 @@ package spring.jsonfiledb.pojo;
 
 import com.dslplatform.json.*;
 
-@CompiledJson
+/**
+ * POJO объект "Задача"
+ */
+@CompiledJson(name = "Задача")
 public class Task implements IPojo {
 
-    @JsonAttribute(name = "ID")
+    @JsonAttribute(name = "Идентификатор")
     private String id;
+
     @JsonAttribute(name = "Описание")
     private String description;
+
     @JsonAttribute(name = "Автор")
     private String author;
-    @JsonAttribute(name = "Имя")
+
+    @JsonAttribute(name = "Название")
     private String name;
+
     @JsonAttribute(name = "Точка истории")
     private int storyPoint;
 

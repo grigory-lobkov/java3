@@ -5,39 +5,59 @@ import spring.jsonfiledb.repo.IRepo;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Scanner;
 
-/*
-5. Создать клиентский класс с методом main, в котором в виде консольного диалога пользователю предлагается:
-создать задачу, изменить содержимое задачи, вывести список задач на экран, вывести конкретную задачу, удалить задачу
-*/
+/**
+ * Класс позволяет работать с POJO объектами в виде консольного диалога:
+ * - создать обхект,
+ * - изменить содержимое объекта,
+ * - вывести список на экран,
+ * - вывести конкретный объект,
+ * - удалить один объект
+ *
+ * Для запуска потребуется передать пример POJO объекта и инициализованный репозиторий
+ *
+ * При возникновении любой ошибки, взаимодействие остановится
+ */
 public class ConsoleBus implements IBus {
 
     private Class pojoClazz;
     private Constructor<IPojo> pojoConstructor;
     IRepo repo;
 
+    /**
+     * Запуск опроса консоли
+     *
+     * @param pojo пример POJO объекта
+     * @param repo инициализованный репозиторий
+     */
+    @Override
     public void start(IPojo pojo, IRepo repo) {
         try {
             pojoClazz = pojo.getClass();
             pojoConstructor = pojoClazz.getConstructor();
             this.repo = repo;
 
-            //System.out.println("type '/' to exit");
-
             try (Scanner in = new Scanner(System.in)) {
-                while (selectOperation(in)) {}
+                while (selectOperation(in)) {
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private boolean selectOperation(Scanner in) throws InterruptedException {
-        System.out.print("Choose operation (0-exit,1-create,2-update,3-delete,4-get,5-all): ");
+    /**
+     * Выбрать операцию - главное меню
+     *
+     * @param in проинициализированный сканер консоли
+     * @return {@code true}, если можно продолжать
+     */
+    private boolean selectOperation(Scanner in) {
+        System.out.print("\nChoose operation (0-exit,1-create,2-update,3-delete,4-get,5-all): ");
         String o = in.nextLine().trim().substring(0, 1);
+        System.out.println();
         try {
             switch (o) {
                 case "/":
@@ -45,10 +65,14 @@ public class ConsoleBus implements IBus {
                     return false;
                 case "1":
                     return doCreate(in);
-                case "2": return doUpdate(in);
-                case "3": return doDelete(in);
-                case "4": return getById(in)!=null;
-                case "5": return getAll(in);
+                case "2":
+                    return doUpdate(in);
+                case "3":
+                    return doDelete(in);
+                case "4":
+                    return getById(in) != null;
+                case "5":
+                    return getAll(in);
             }
         } catch (Exception e) {
             System.out.println("Error happen: " + e.getMessage());
@@ -56,6 +80,12 @@ public class ConsoleBus implements IBus {
         return false;
     }
 
+    /**
+     * Получить список всех объектов из хранилища
+     *
+     * @param in проинициализированный сканер консоли
+     * @return {@code true}, если можно продолжать
+     */
     private boolean getAll(Scanner in) {
         List<IPojo> all = repo.get();
         if (all == null)
@@ -67,27 +97,93 @@ public class ConsoleBus implements IBus {
         return true;
     }
 
+    /**
+     * Удаление объекта
+     *
+     * @param in проинициализированный сканер консоли
+     * @return {@code true}, если можно продолжать
+     */
     private boolean doDelete(Scanner in) {
         IPojo instance = getById(in);
-        if(instance==null)
+        if (instance == null)
             return false;
         repo.delete(instance.getId());
-        System.out.println(instance+" deleted");
+        System.out.println(instance + " deleted");
         return true;
     }
 
+    /**
+     * Обновление свойств объекта (кроме id)
+     * Поддерживаются типы: String, int
+     *
+     * @param in проинициализированный сканер консоли
+     * @return {@code true}, если можно продолжать
+     * @throws IllegalAccessException если не получится считать или записать свойство объекта
+     */
     private boolean doUpdate(Scanner in) throws IllegalAccessException {
         IPojo instance = getById(in);
-        if(instance==null)
+        if (instance == null)
             return false;
         Field[] fields = pojoClazz.getDeclaredFields();
         for (Field field : fields) {
-            field.setAccessible(true);
+            String fieldName = field.getName();
+            if (!fieldName.equals("id")) {
+                field.setAccessible(true);
+                String fieldValue = field.get(instance).toString();
+                Class type = field.getType();
+                String typeName = type.getSimpleName();
+                System.out.print("Enter field '" + typeName + " " + fieldName + "'='" + fieldValue + "' new value: ");
+                String line = in.nextLine().trim();
+                if (line != null && !line.isEmpty()) {
+                    if (type.equals(String.class)) {
+                        field.set(instance, line);
+                    } else if (typeName.equals("int")) {
+                        field.set(instance, Integer.valueOf(line));
+                    }
+                }
+            }
+        }
+        repo.update(instance);
+        System.out.println(instance + " saved");
+        return true;
+    }
+
+    /**
+     * Получить объект по идентификатору
+     *
+     * @param in проинициализированный сканер консоли
+     * @return {@code true}, если можно продолжать
+     */
+    private IPojo getById(Scanner in) {
+        System.out.print("Enter ID to get object: ");
+        String line = in.nextLine().trim();
+        IPojo got = repo.get(line);
+        if (got != null)
+            System.out.println(got);
+        else
+            System.out.println("ID='" + line + "' not found");
+        return got;
+    }
+
+    /**
+     * Создать новый объект и записать его в хранилище
+     * Поддерживаются типы: String, int
+     *
+     * @param in проинициализированный сканер консоли
+     * @return {@code true}, если можно продолжать
+     * @throws Exception если не удастся создать экземпляр объекта, либо обновить его свойства
+     */
+    private boolean doCreate(Scanner in) throws Exception {
+        IPojo instance = pojoConstructor.newInstance();
+        Field[] fields = pojoClazz.getDeclaredFields();
+        for (Field field : fields) {
+            String fieldName = field.getName();
             Class type = field.getType();
             String typeName = type.getSimpleName();
-            System.out.print("Enter field '"+ typeName + " " + field.getName()+"'='"+field.get(instance)+"' new value: ");
+            System.out.print("Enter field '" + typeName + " " + fieldName + "' value: ");
             String line = in.nextLine().trim();
-            if(line!=null && !line.isEmpty()) {
+            if (line != null && !line.isEmpty()) {
+                field.setAccessible(true);
                 if (type.equals(String.class)) {
                     field.set(instance, line);
                 } else if (typeName.equals("int")) {
@@ -96,38 +192,7 @@ public class ConsoleBus implements IBus {
             }
         }
         repo.save(instance);
-        System.out.println(instance+" saved");
-        return true;
-    }
-
-    private IPojo getById(Scanner in) {
-        System.out.print("Enter ID to get object: ");
-        String line = in.nextLine().trim();
-        IPojo got = repo.get(line);
-        if(got!=null)
-            System.out.println(got);
-        else
-            System.out.println("ID='"+line+"' not found");
-        return got;
-    }
-
-    private boolean doCreate(Scanner in) throws IllegalAccessException, InvocationTargetException, InstantiationException {
-        IPojo instance = pojoConstructor.newInstance();
-        Field[] fields = pojoClazz.getDeclaredFields();
-        for (Field field : fields) {
-            field.setAccessible(true);
-            Class type = field.getType();
-            String typeName = type.getSimpleName();
-            System.out.print("Enter field '"+ typeName + " " + field.getName()+"' value: ");
-            String line = in.nextLine().trim();
-            if(type.equals(String.class)){
-                field.set(instance, line);
-            } else if(typeName.equals("int")){
-                field.set(instance, Integer.valueOf(line));
-            }
-        }
-        repo.save(instance);
-        System.out.println(instance+" saved");
+        System.out.println(instance + " saved");
         return true;
     }
 
