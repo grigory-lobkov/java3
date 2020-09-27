@@ -61,8 +61,8 @@ public class JsonFileStore<E extends IEntity> implements IStore {
     private DslJson<Object> json;
 
     public JsonFileStore() {}
-    public JsonFileStore(String fileName, IEntity entity) throws NoSuchMethodException, IOException {
-        init(fileName, entity);
+    public JsonFileStore(String fileName, Class entityClass) throws NoSuchMethodException, IOException {
+        init(fileName, entityClass);
     }
     /**
      * Инициализация хранилища
@@ -81,7 +81,7 @@ public class JsonFileStore<E extends IEntity> implements IStore {
         fileName = (String) params[0];
 
         if (!(params[1] instanceof Class))
-            throw new RuntimeException("params[0] is not Class");
+            throw new RuntimeException("params[1] is not Class");
         entityClazz = (Class)params[1];
         entityClazzConstructor = entityClazz.getConstructor();
 

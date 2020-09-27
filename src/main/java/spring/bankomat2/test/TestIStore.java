@@ -5,7 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import spring.bankomat2.App;
 import spring.bankomat2.entity.IEntity;
 import spring.bankomat2.store.IStore;
 
@@ -23,7 +23,7 @@ public class TestIStore {
      * Имя файла пробного хранилища - будет удален по завершенни теста
      */
     static private final String fileName = "test.json";
-    static ApplicationContext context = new ClassPathXmlApplicationContext("bankomat-context.xml");
+    static ApplicationContext context = App.context;
     static private File file;
     static private Class entityClazz;
     static private Constructor<IEntity> entityConstructor;
@@ -75,7 +75,7 @@ public class TestIStore {
     @Before
     public void init() throws Exception {
         file.delete();
-        store.init(fileName, entity);
+        store.init(fileName, entity.getClass());
     }
 
     /**

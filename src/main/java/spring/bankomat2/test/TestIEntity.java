@@ -4,17 +4,17 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import spring.bankomat2.App;
 import spring.bankomat2.entity.IEntity;
 
 import java.lang.reflect.Constructor;
 
 /**
- * Тестирование объекта, заданного контекстом spring.jsonfiledb.App
+ * Тестирование объекта, заданного контекстом springboot.tt.App
  */
 public class TestIEntity {
 
-    static ApplicationContext context = new ClassPathXmlApplicationContext("bankomat-context.xml");
+    static ApplicationContext context = App.context;
     static private IEntity entity;
     static private Class entityClazz;
     static private Constructor<IEntity> entityConstructor;
@@ -27,7 +27,7 @@ public class TestIEntity {
      */
     @BeforeClass
     public static void init() throws Exception {
-        entityClazz = context.getBean("account").getClass();
+        entityClazz = context.getBean("accountEntity").getClass();
         entityConstructor = entityClazz.getDeclaredConstructor();
         entity = entityConstructor.newInstance();
     }

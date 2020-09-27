@@ -23,8 +23,7 @@ public class Config {
     @Bean
     public IStore accountStore() throws Exception {
         System.out.println("accountStore()");
-        IStore store = new JsonFileStore();
-        store.init("accounts.json", accountEntity().getClass());
+        IStore store = new JsonFileStore("accounts.json", accountEntity().getClass());
         return store;
     }
 
