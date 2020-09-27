@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Класс позволяет работать с POJO объектами в виде консольного диалога:
+ * Класс позволяет работать с POJO сущностями (Entity) в виде консольного диалога:
  * - создать обхект,
  * - изменить содержимое объекта,
  * - вывести список на экран,
  * - вывести конкретный объект,
  * - удалить один объект
  *
- * Для запуска потребуется передать пример POJO объекта и инициализованный репозиторий
+ * Для запуска потребуется передать пример POJO ущности (Entity) и инициализованный репозиторий
  *
  * При возникновении любой ошибки, взаимодействие остановится
  */
@@ -27,31 +27,30 @@ public class ConsoleBus implements IBus {
     private Constructor<IEntity> entityConstructor;
     IStore store;
 
-    public ConsoleBus(IEntity entity, IStore store) {
-        start(entity, store);
+    public void setEntityClass(Class entityClazz) {
+        this.entityClazz = entityClazz;
+        try {
+            entityConstructor = entityClazz.getConstructor();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setStore(IStore store) {
+        this.store = store;
     }
 
     /**
      * Запуск опроса консоли
-     *
-     * @param entity пример POJO объекта
-     * @param store инициализованный репозиторий
      */
     @Override
-    public void start(IEntity entity, IStore store) {
-        try {
-            entityClazz = entity.getClass();
-            entityConstructor = entityClazz.getConstructor();
-            this.store = store;
-
-            try (Scanner in = new Scanner(System.in)) {
-                while (selectOperation(in)) {
-                }
+    public void start() {
+        try (Scanner in = new Scanner(System.in)) {
+            while (selectOperation(in)) {
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
+
 
     /**
      * Выбрать операцию - главное меню

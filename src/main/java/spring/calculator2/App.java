@@ -5,7 +5,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import spring.calculator2.bus.IBus;
 import spring.calculator2.repo.ICalculator;
 
-/* 1.1. Практическая работа
+/* 3 Домашняя работа
+0. Переписать задания первого и второго урока с XML-конфигурации на Java Base конфигурацию
 
 Создать два класса реализующих интерфейс ICalculator.
 Первый простой SimpleCalculator, который не учитывает переполнение переменной,

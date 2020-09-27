@@ -27,7 +27,7 @@ public class TestIPojo {
      */
     @BeforeClass
     public static void init() throws Exception {
-        pojoClazz = App.context.getBean("taskPojo").getClass();
+        pojoClazz = App.context.getBean("accountPojo").getClass();
         pojoConstructor = pojoClazz.getDeclaredConstructor();
         pojo = pojoConstructor.newInstance();
     }

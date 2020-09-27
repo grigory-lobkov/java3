@@ -1,10 +1,12 @@
 package spring.bankomat2;
 
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import spring.bankomat2.bus.IBus;
 
 
-/* 2 Домашняя работа
+/* 3 Домашняя работа
+0. Переписать задания первого и второго урока с XML-конфигурации на Java Base конфигурацию
 
 1. Реализовать класс Account c полями:
      id – уникальный идентификатор счета,
@@ -45,22 +47,7 @@ public class App {
     /**
      * Инициализация контекста приложения
      */
-    static ApplicationContext context = new ClassPathXmlApplicationContext("bankomat-context.xml");
-
-    /**
-     * Бин объекта, класс которого определяется контекстом
-     */
-    //static public IEntity entity = context.getBean(Account.class);
-
-    /**
-     * Бин репозитория
-     */
-    //static public IStore<Account> store = (IStore<Account>)context.getBean("accountStore");
-
-    /**
-     * Бин шины взаимодействия с внешним миром
-     */
-    //static public IBus bus = context.getBean(IBus.class);
+    static public ApplicationContext context = new AnnotationConfigApplicationContext(Config.class);
 
     /**
      * Точка входа в приложение
@@ -71,12 +58,10 @@ public class App {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        // инициализация хранилища
-        //store.init("bankomat.json", entity);
 
         // запуск программы
-        //bus.start(entity, store);
-        System.out.println("");
+        context.getBean(IBus.class).start();
+
     }
 
 }

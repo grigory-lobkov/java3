@@ -10,7 +10,8 @@ import spring.jsonfiledb2.pojo.Task;
 import spring.jsonfiledb2.repo.IRepo;
 
 
-/* 1.2 Домашняя работа
+/* 3 Домашняя работа
+0. Переписать задания первого и второго урока с XML-конфигурации на Java Base конфигурацию
 
 1. Создать класс FileTaskRepository -  который выполняет CRUD операции над задачами
 и реализует интерфейс TaskRepository.

@@ -10,10 +10,7 @@ public interface IBus {
 
     /**
      * Установить связь
-     *
-     * @param entity пример объекта
-     * @param store инициализованный репозиторий
      */
-    void start(IEntity entity, IStore store);
+    void start();
 
 }
